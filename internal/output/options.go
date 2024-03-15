@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"os"
 
 	"github.com/cweill/gotests/internal/models"
@@ -19,7 +19,7 @@ type Options struct {
 	Parallel       bool
 	Named          bool
 	Template       string
-	TemplateDir    string
+	TemplateFS     fs.FS
 	TemplateParams map[string]interface{}
 	TemplateData   [][]byte
 
@@ -31,7 +31,7 @@ func (o *Options) Process(head *models.Header, funcs []*models.Function) ([]byte
 
 	switch {
 	case o.providesTemplateDir():
-		if err := o.render.LoadCustomTemplates(o.TemplateDir); err != nil {
+		if err := o.render.LoadCustomTemplates(o.TemplateFS); err != nil {
 			return nil, fmt.Errorf("loading custom templates: %v", err)
 		}
 	case o.providesTemplate():
@@ -41,11 +41,9 @@ func (o *Options) Process(head *models.Header, funcs []*models.Function) ([]byte
 	case o.providesTemplateData():
 		o.render.LoadFromData(o.TemplateData)
 	}
-
-	//
-	tf, err := ioutil.TempFile("", "gotests_")
+	tf, err := os.CreateTemp("", "gotests_*")
 	if err != nil {
-		return nil, fmt.Errorf("ioutil.TempFile: %v", err)
+		return nil, fmt.Errorf("os.CreateTemp: %v", err)
 	}
 	defer tf.Close()
 	defer os.Remove(tf.Name())
@@ -69,7 +67,7 @@ func (o *Options) providesTemplateData() bool {
 }
 
 func (o *Options) providesTemplateDir() bool {
-	return o != nil && o.TemplateDir != ""
+	return o != nil && o.TemplateFS != nil
 }
 
 func (o *Options) providesTemplate() bool {

@@ -143,6 +143,23 @@ func (f *Function) TestName() string {
 	return "Test" + f.Name
 }
 
+func (f *Function) FuzzName() string {
+	if strings.HasPrefix(f.Name, "Fuzz") {
+		return f.Name
+	}
+	if f.Receiver != nil {
+		receiverType := f.Receiver.Type.Value
+		if unicode.IsLower([]rune(receiverType)[0]) {
+			receiverType = "_" + receiverType
+		}
+		return "Fuzz" + receiverType + "_" + f.Name
+	}
+	if unicode.IsLower([]rune(f.Name)[0]) {
+		return "Fuzz_" + f.Name
+	}
+	return "Fuzz" + f.Name
+}
+
 func (f *Function) IsNaked() bool {
 	return f.Receiver == nil && len(f.Parameters) == 0 && len(f.Results) == 0
 }

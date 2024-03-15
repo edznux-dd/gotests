@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"go/types"
+	"io/fs"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -27,7 +28,7 @@ func TestGenerateTests(t *testing.T) {
 		parallel           bool
 		named              bool
 		importer           types.Importer
-		templateDir        string
+		templateFS         fs.FS
 		template           string
 		templateParamsPath string
 		templateData       [][]byte
@@ -896,8 +897,8 @@ func TestGenerateTests(t *testing.T) {
 				Parallel:       tt.args.parallel,
 				Named:          tt.args.named,
 				Importer:       func() types.Importer { return tt.args.importer },
-				TemplateDir:    tt.args.templateDir,
-				Template:       tt.args.template,
+				TemplateDirFS:  tt.args.templateFS,
+				TemplateFS:     tt.args.template,
 				TemplateParams: params,
 				TemplateData:   tt.args.templateData,
 			})

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -33,7 +34,7 @@ type Options struct {
 	Named              bool     // Create Map instead of slice
 	WriteOutput        bool     // Write output to test file(s).
 	Template           string   // Name of custom template set
-	TemplateDir        string   // Path to custom template set
+	TemplateFS         fs.FS    // Path to custom template set
 	TemplateParamsPath string   // Path to custom parameters json file(s).
 	TemplateData       [][]byte // Data slice for templates
 }
@@ -99,7 +100,7 @@ func parseOptions(out io.Writer, opt *Options) *gotests.Options {
 		Parallel:       opt.Parallel,
 		Named:          opt.Named,
 		Template:       opt.Template,
-		TemplateDir:    opt.TemplateDir,
+		TemplateDir:    opt.TemplateFS,
 		TemplateParams: templateParams,
 		TemplateData:   opt.TemplateData,
 	}
