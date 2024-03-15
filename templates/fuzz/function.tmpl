@@ -2,31 +2,11 @@
 {{- $f := .}}
 
 func {{.FuzzName}}(f *testing.F) {
-    f.Add(
-    {{- range .TestParameters}}
-        {{if eq .Type "bool" }} true {{- end}},
-        {{if eq .Type "int" }} 0 {{- end}},
-        {{if eq .Type "int8" }} 0 {{- end}},
-        {{if eq .Type "int16" }} 0 {{- end}},
-        {{if eq .Type "int32" }} 0 {{- end}},
-        {{if eq .Type "int64" }} 0 {{- end}},
-        {{if eq .Type "uint" }} 0 {{- end}},
-        {{if eq .Type "uint8" }} 0 {{- end}},
-        {{if eq .Type "uint16" }} 0 {{- end}},
-        {{if eq .Type "uint32" }} 0 {{- end}},
-        {{if eq .Type "uint64" }} 0 {{- end}},
-        {{if eq .Type "float32" }} 1.2 {{- end}},
-        {{if eq .Type "float64" }} 1.2 {{- end}},
-        {{if eq .Type "string" }} "hello" {{- end}},
-    {{- end}}
-    )
-    f.Fuzz(func(t *testing.T,
-        {{- range .TestParameters}}
-				{{Param .}} {{.Type}},
-		{{- end}}
-    ){
-
-	}
+    f.Add({{- range .TestParameters}} {{- DefaultValueFromType . }},{{- end}})
+    f.Fuzz(func(t *testing.T, {{- range .TestParameters}} {{- Param .}} {{.Type}}, {{- end}}){
+        {{template "inline" $f}}
+        return
+	})
 }
 
 {{end}}

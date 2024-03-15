@@ -35,8 +35,8 @@ func TestOptions_providesTemplate(t *testing.T) {
 	}{
 		{"Opt is nil", nil, false},
 		{"Opt is empty", &Options{}, false},
-		{"Template is empty (implicit_zero_val)", &Options{TemplateFS: ""}, false},
-		{"Template is OK", &Options{TemplateFS: "testify"}, true},
+		{"Template is nil (implicit_zero_val)", &Options{TemplateName: ""}, false},
+		{"Template is OK", &Options{TemplateName: "test"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -55,8 +55,8 @@ func TestOptions_providesTemplateDir(t *testing.T) {
 	}{
 		{"Opt is nil", nil, false},
 		{"Opt is empty", &Options{}, false},
-		{"Template is empty", &Options{TemplateDirFS: nil}, false},
-		{"Template is OK", &Options{TemplateDirFS: templates.TemplatesToFS["testify"]}, true},
+		{"Template is nil (implicit_zero_val)", &Options{TemplateFS: nil}, false},
+		{"Template is OK", &Options{TemplateFS: templates.TestifyFS}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -16,11 +16,12 @@ type Render struct {
 func New() *Render {
 	r := Render{
 		tmpls: template.New("render").Funcs(map[string]interface{}{
-			"Field":    fieldName,
-			"Receiver": receiverName,
-			"Param":    parameterName,
-			"Want":     wantName,
-			"Got":      gotName,
+			"Field":                fieldName,
+			"Receiver":             receiverName,
+			"Param":                parameterName,
+			"Want":                 wantName,
+			"Got":                  gotName,
+			"DefaultValueFromType": defaultValueForType,
 		}),
 	}
 

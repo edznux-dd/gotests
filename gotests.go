@@ -126,7 +126,7 @@ func generateTest(src models.Path, files []models.Path, opt *Options) (*Generate
 		Subtests:       opt.Subtests,
 		Parallel:       opt.Parallel,
 		Named:          opt.Named,
-		Template:       opt.Template,
+		TemplateName:   opt.Template,
 		TemplateFS:     opt.TemplateFS,
 		TemplateParams: opt.TemplateParams,
 		TemplateData:   opt.TemplateData,

@@ -10,6 +10,7 @@ import (
 
 	"github.com/cweill/gotests/internal/models"
 	"github.com/cweill/gotests/internal/render"
+	"github.com/cweill/gotests/templates"
 	"golang.org/x/tools/imports"
 )
 
@@ -18,7 +19,7 @@ type Options struct {
 	Subtests       bool
 	Parallel       bool
 	Named          bool
-	Template       string
+	TemplateName   string
 	TemplateFS     fs.FS
 	TemplateParams map[string]interface{}
 	TemplateData   [][]byte
@@ -35,7 +36,11 @@ func (o *Options) Process(head *models.Header, funcs []*models.Function) ([]byte
 			return nil, fmt.Errorf("loading custom templates: %v", err)
 		}
 	case o.providesTemplate():
-		if err := o.render.LoadCustomTemplatesName(o.Template); err != nil {
+		internalFS, ok := templates.TemplatesToFS[o.TemplateName]
+		if !ok {
+			return nil, fmt.Errorf("Unknown template name: %s", o.TemplateName)
+		}
+		if err := o.render.LoadCustomTemplates(internalFS); err != nil {
 			return nil, fmt.Errorf("loading custom templates of name: %v", err)
 		}
 	case o.providesTemplateData():
@@ -67,15 +72,15 @@ func (o *Options) providesTemplateData() bool {
 }
 
 func (o *Options) providesTemplateDir() bool {
-	return o != nil && o.TemplateFS != nil
+	return o != nil && o.TemplateFS != nil && o.TemplateName == ""
 }
 
 func (o *Options) providesTemplate() bool {
-	return o != nil && o.Template != ""
+	return o != nil && o.TemplateName != ""
 }
 
 func (o *Options) writeTests(w io.Writer, head *models.Header, funcs []*models.Function) error {
-	if path, ok := importsMap[o.Template]; ok {
+	if path, ok := importsMap[o.TemplateName]; ok {
 		head.Imports = append(head.Imports, &models.Import{
 			Path: fmt.Sprintf(`"%s"`, path),
 		})

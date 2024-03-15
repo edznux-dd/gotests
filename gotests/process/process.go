@@ -100,7 +100,7 @@ func parseOptions(out io.Writer, opt *Options) *gotests.Options {
 		Parallel:       opt.Parallel,
 		Named:          opt.Named,
 		Template:       opt.Template,
-		TemplateDir:    opt.TemplateFS,
+		TemplateFS:     opt.TemplateFS,
 		TemplateParams: templateParams,
 		TemplateData:   opt.TemplateData,
 	}

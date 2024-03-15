@@ -6,6 +6,7 @@ import (
 	"go/types"
 	"io/fs"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -690,8 +691,8 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "Test non existing template path",
 			args: args{
-				srcPath:     `testdata/calculator.go`,
-				templateDir: `/tmp/not/existing/path`,
+				srcPath:    `testdata/calculator.go`,
+				templateFS: os.DirFS(`/tmp/not/existing/path`),
 			},
 			wantErr:     true,
 			wantNoTests: true,
@@ -699,8 +700,8 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "Test non bad template formatting",
 			args: args{
-				srcPath:     `testdata/calculator.go`,
-				templateDir: `testdata/bad_customtemplates`,
+				srcPath:    `testdata/calculator.go`,
+				templateFS: os.DirFS(`testdata/bad_customtemplates`),
 			},
 			wantErr:     true,
 			wantNoTests: true,
@@ -708,8 +709,8 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "Test custom template path",
 			args: args{
-				srcPath:     `testdata/test004.go`,
-				templateDir: `testdata/customtemplates`,
+				srcPath:    `testdata/test004.go`,
+				templateFS: os.DirFS(`testdata/customtemplates`),
 			},
 			want: mustReadAndFormatGoFile(t, "testdata/goldens/function_with_return_value_custom_template.go"),
 		},
@@ -726,7 +727,7 @@ func TestGenerateTests(t *testing.T) {
 			name: "Test use external params and custom template",
 			args: args{
 				srcPath:            `testdata/use_template_params/use_template_params.go`,
-				templateDir:        `testdata/use_template_params/`,
+				templateFS:         os.DirFS(`testdata/use_template_params/`),
 				templateParamsPath: `testdata/use_template_params/use_template_params.json`,
 			},
 			wantNoTests: false,
@@ -781,9 +782,9 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "With template=testify templateDir=testdata/customtemplates",
 			args: args{
-				srcPath:     `testdata/test004.go`,
-				template:    "testify",
-				templateDir: `testdata/customtemplates`,
+				srcPath:    `testdata/test004.go`,
+				template:   "testify",
+				templateFS: os.DirFS(`testdata/customtemplates`),
 			},
 			want: mustReadAndFormatGoFile(t, "testdata/goldens/function_with_return_value_custom_template.go"),
 		},
@@ -897,8 +898,8 @@ func TestGenerateTests(t *testing.T) {
 				Parallel:       tt.args.parallel,
 				Named:          tt.args.named,
 				Importer:       func() types.Importer { return tt.args.importer },
-				TemplateDirFS:  tt.args.templateFS,
-				TemplateFS:     tt.args.template,
+				TemplateFS:     tt.args.templateFS,
+				Template:       tt.args.template,
 				TemplateParams: params,
 				TemplateData:   tt.args.templateData,
 			})
