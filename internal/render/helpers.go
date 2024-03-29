@@ -1,6 +1,5 @@
 package render
 
-//go:generate esc -o bindata/esc.go -pkg=bindata templates
 import (
 	"fmt"
 	"strings"
@@ -30,10 +29,15 @@ func receiverName(f *models.Receiver) string {
 	if n == "name" {
 		// Avoid conflict with test struct's "name" field.
 		n = "n"
-	} else if n == "t" {
+	}
+	if n == "t" {
 		// Avoid conflict with test argument.
 		// "tr" is short for t receiver.
 		n = "tr"
+	}
+	if n == "f" {
+		// Avoid conflict with fuzzing argument (f *testing.F)
+		n = "fr"
 	}
 	return n
 }
@@ -46,6 +50,23 @@ func parameterName(f *models.Field) string {
 		n = fmt.Sprintf("in%v", f.Index)
 	}
 	return n
+}
+
+func defaultValueForType(f *models.Field) string {
+	switch f.Type.Underlying {
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
+		return "0"
+	case "float32", "float64":
+		return "0.0"
+	case "string":
+		return `"hello"`
+	case "byte":
+		return `byte(0x01)`
+	default:
+		// go test fuzz does not support non basic types
+		// We can import well known libs to handle that case
+		return "[]byte{}"
+	}
 }
 
 func wantName(f *models.Field) string {

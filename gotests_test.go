@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"go/types"
-	"io/ioutil"
+	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -27,7 +28,7 @@ func TestGenerateTests(t *testing.T) {
 		parallel           bool
 		named              bool
 		importer           types.Importer
-		templateDir        string
+		templateFS         fs.FS
 		template           string
 		templateParamsPath string
 		templateData       [][]byte
@@ -689,8 +690,8 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "Test non existing template path",
 			args: args{
-				srcPath:     `testdata/calculator.go`,
-				templateDir: `/tmp/not/existing/path`,
+				srcPath:    `testdata/calculator.go`,
+				templateFS: os.DirFS(`/tmp/not/existing/path`),
 			},
 			wantErr:     true,
 			wantNoTests: true,
@@ -698,8 +699,8 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "Test non bad template formatting",
 			args: args{
-				srcPath:     `testdata/calculator.go`,
-				templateDir: `testdata/bad_customtemplates`,
+				srcPath:    `testdata/calculator.go`,
+				templateFS: os.DirFS(`testdata/bad_customtemplates`),
 			},
 			wantErr:     true,
 			wantNoTests: true,
@@ -707,8 +708,8 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "Test custom template path",
 			args: args{
-				srcPath:     `testdata/test004.go`,
-				templateDir: `testdata/customtemplates`,
+				srcPath:    `testdata/test004.go`,
+				templateFS: os.DirFS(`testdata/customtemplates`),
 			},
 			want: mustReadAndFormatGoFile(t, "testdata/goldens/function_with_return_value_custom_template.go"),
 		},
@@ -725,7 +726,7 @@ func TestGenerateTests(t *testing.T) {
 			name: "Test use external params and custom template",
 			args: args{
 				srcPath:            `testdata/use_template_params/use_template_params.go`,
-				templateDir:        `testdata/use_template_params/`,
+				templateFS:         os.DirFS(`testdata/use_template_params/`),
 				templateParamsPath: `testdata/use_template_params/use_template_params.json`,
 			},
 			wantNoTests: false,
@@ -780,9 +781,9 @@ func TestGenerateTests(t *testing.T) {
 		{
 			name: "With template=testify templateDir=testdata/customtemplates",
 			args: args{
-				srcPath:     `testdata/test004.go`,
-				template:    "testify",
-				templateDir: `testdata/customtemplates`,
+				srcPath:    `testdata/test004.go`,
+				template:   "testify",
+				templateFS: os.DirFS(`testdata/customtemplates`),
 			},
 			want: mustReadAndFormatGoFile(t, "testdata/goldens/function_with_return_value_custom_template.go"),
 		},
@@ -871,9 +872,9 @@ func TestGenerateTests(t *testing.T) {
 			want: mustReadAndFormatGoFile(t, "testdata/named/named_on_subtests_on_parallel_on_template_testify.go"),
 		},
 	}
-	tmp, err := ioutil.TempDir("", "gotests_test")
+	tmp, err := os.MkdirTemp("", "gotests_test")
 	if err != nil {
-		t.Fatalf("ioutil.TempDir: %v", err)
+		t.Fatalf("os.MkdirTemp: %v", err)
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -896,7 +897,7 @@ func TestGenerateTests(t *testing.T) {
 				Parallel:       tt.args.parallel,
 				Named:          tt.args.named,
 				Importer:       func() types.Importer { return tt.args.importer },
-				TemplateDir:    tt.args.templateDir,
+				TemplateFS:     tt.args.templateFS,
 				Template:       tt.args.template,
 				TemplateParams: params,
 				TemplateData:   tt.args.templateData,
@@ -948,14 +949,14 @@ func mustReadAndFormatGoFile(t *testing.T, filename string) string {
 
 func outputResult(t *testing.T, tmpDir, testName string, got []byte) {
 	tmpResult := path.Join(tmpDir, toSnakeCase(testName)+".go")
-	if err := ioutil.WriteFile(tmpResult, got, 0644); err != nil {
-		t.Errorf("ioutil.WriteFile: %v", err)
+	if err := os.WriteFile(tmpResult, got, 0644); err != nil {
+		t.Errorf("os.WriteFile: %v", err)
 	}
 	t.Logf(tmpResult)
 }
 
 func loadExternalJsonFile(file string) (map[string]interface{}, error) {
-	buf, err := ioutil.ReadFile(file)
+	buf, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -966,9 +967,9 @@ func loadExternalJsonFile(file string) (map[string]interface{}, error) {
 }
 
 func mustLoadExternalTemplateDir(t *testing.T, dir string) [][]byte {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
-		t.Fatalf("ioutil.ReadDir: %v", err)
+		t.Fatalf("os.ReadDir: %v", err)
 	}
 
 	templateData := make([][]byte, 0)
@@ -982,7 +983,7 @@ func mustLoadExternalTemplateDir(t *testing.T, dir string) [][]byte {
 }
 
 func mustLoadExternalTemplateFile(t *testing.T, file string) []byte {
-	buf, err := ioutil.ReadFile(file)
+	buf, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatalf("loading external template file: %v", err)
 	}

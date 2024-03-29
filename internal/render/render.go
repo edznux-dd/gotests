@@ -3,13 +3,10 @@ package render
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
-	"path"
+	"io/fs"
 	"text/template"
 
 	"github.com/cweill/gotests/internal/models"
-	"github.com/cweill/gotests/internal/render/bindata"
-	"github.com/cweill/gotests/templates"
 )
 
 type Render struct {
@@ -19,64 +16,32 @@ type Render struct {
 func New() *Render {
 	r := Render{
 		tmpls: template.New("render").Funcs(map[string]interface{}{
-			"Field":    fieldName,
-			"Receiver": receiverName,
-			"Param":    parameterName,
-			"Want":     wantName,
-			"Got":      gotName,
+			"Field":                fieldName,
+			"Receiver":             receiverName,
+			"Param":                parameterName,
+			"Want":                 wantName,
+			"Got":                  gotName,
+			"DefaultValueFromType": defaultValueForType,
 		}),
 	}
 
-	// default templates first
-	for _, name := range bindata.AssetNames() {
-		r.tmpls = template.Must(r.tmpls.Parse(bindata.FSMustString(false, name)))
+	var err error
+	r.tmpls, err = r.tmpls.ParseFS(DefaultTemplates, "**/*.tmpl")
+	if err != nil {
+		// if there's an error here, we have a problem in the default template
+		// This should basically be a compile time error, so panic'ing to error asap.
+		panic(err)
 	}
 
 	return &r
 }
 
 // LoadCustomTemplates allows to load in custom templates from a specified path.
-func (r *Render) LoadCustomTemplates(dir string) error {
-	files, err := ioutil.ReadDir(dir)
+func (r *Render) LoadCustomTemplates(fs fs.FS) error {
+	var err error
+	r.tmpls, err = r.tmpls.ParseFS(fs, "**/*.tmpl")
 	if err != nil {
-		return fmt.Errorf("ioutil.ReadDir: %v", err)
-	}
-
-	templateFiles := []string{}
-	for _, f := range files {
-		templateFiles = append(templateFiles, path.Join(dir, f.Name()))
-	}
-	r.tmpls, err = r.tmpls.ParseFiles(templateFiles...)
-	if err != nil {
-		return fmt.Errorf("tmpls.ParseFiles: %v", err)
-	}
-
-	return nil
-}
-
-// LoadCustomTemplatesName allows to load in custom templates of a specified name from the templates directory.
-func (r *Render) LoadCustomTemplatesName(name string) error {
-	f, err := templates.Dir(false, "/").Open(name)
-	if err != nil {
-		return fmt.Errorf("templates.Open: %v", err)
-	}
-
-	files, err := f.Readdir(nFile)
-	if err != nil {
-		return fmt.Errorf("f.Readdir: %v", err)
-	}
-
-	for _, f := range files {
-		text, err := templates.FSString(false, path.Join("/", name, f.Name()))
-		if err != nil {
-			return fmt.Errorf("templates.FSString: %v", err)
-		}
-
-		if tmpls, err := r.tmpls.Parse(text); err != nil {
-			return fmt.Errorf("tmpls.Parse: %v", err)
-		} else {
-			r.tmpls = tmpls
-		}
+		return fmt.Errorf("LoadCustomTemplates: %w", err)
 	}
 
 	return nil

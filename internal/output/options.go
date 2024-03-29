@@ -5,11 +5,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"os"
 
 	"github.com/cweill/gotests/internal/models"
 	"github.com/cweill/gotests/internal/render"
+	"github.com/cweill/gotests/templates"
 	"golang.org/x/tools/imports"
 )
 
@@ -18,8 +19,8 @@ type Options struct {
 	Subtests       bool
 	Parallel       bool
 	Named          bool
-	Template       string
-	TemplateDir    string
+	TemplateName   string
+	TemplateFS     fs.FS
 	TemplateParams map[string]interface{}
 	TemplateData   [][]byte
 
@@ -31,21 +32,23 @@ func (o *Options) Process(head *models.Header, funcs []*models.Function) ([]byte
 
 	switch {
 	case o.providesTemplateDir():
-		if err := o.render.LoadCustomTemplates(o.TemplateDir); err != nil {
+		if err := o.render.LoadCustomTemplates(o.TemplateFS); err != nil {
 			return nil, fmt.Errorf("loading custom templates: %v", err)
 		}
 	case o.providesTemplate():
-		if err := o.render.LoadCustomTemplatesName(o.Template); err != nil {
+		internalFS, ok := templates.TemplatesToFS[o.TemplateName]
+		if !ok {
+			return nil, fmt.Errorf("Unknown template name: %s", o.TemplateName)
+		}
+		if err := o.render.LoadCustomTemplates(internalFS); err != nil {
 			return nil, fmt.Errorf("loading custom templates of name: %v", err)
 		}
 	case o.providesTemplateData():
 		o.render.LoadFromData(o.TemplateData)
 	}
-
-	//
-	tf, err := ioutil.TempFile("", "gotests_")
+	tf, err := os.CreateTemp("", "gotests_*")
 	if err != nil {
-		return nil, fmt.Errorf("ioutil.TempFile: %v", err)
+		return nil, fmt.Errorf("os.CreateTemp: %v", err)
 	}
 	defer tf.Close()
 	defer os.Remove(tf.Name())
@@ -69,15 +72,15 @@ func (o *Options) providesTemplateData() bool {
 }
 
 func (o *Options) providesTemplateDir() bool {
-	return o != nil && o.TemplateDir != ""
+	return o != nil && o.TemplateFS != nil && o.TemplateName == ""
 }
 
 func (o *Options) providesTemplate() bool {
-	return o != nil && o.Template != ""
+	return o != nil && o.TemplateName != ""
 }
 
 func (o *Options) writeTests(w io.Writer, head *models.Header, funcs []*models.Function) error {
-	if path, ok := importsMap[o.Template]; ok {
+	if path, ok := importsMap[o.TemplateName]; ok {
 		head.Imports = append(head.Imports, &models.Import{
 			Path: fmt.Sprintf(`"%s"`, path),
 		})

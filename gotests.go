@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/importer"
 	"go/types"
+	"io/fs"
 	"path"
 	"regexp"
 	"sort"
@@ -27,7 +28,7 @@ type Options struct {
 	Named          bool                   // Create Map instead of slice
 	Importer       func() types.Importer  // A custom importer.
 	Template       string                 // Name of custom template set
-	TemplateDir    string                 // Path to custom template set
+	TemplateFS     fs.FS                  // Path to custom template set
 	TemplateParams map[string]interface{} // Custom external parameters
 	TemplateData   [][]byte               // Data slice for templates
 }
@@ -125,8 +126,8 @@ func generateTest(src models.Path, files []models.Path, opt *Options) (*Generate
 		Subtests:       opt.Subtests,
 		Parallel:       opt.Parallel,
 		Named:          opt.Named,
-		Template:       opt.Template,
-		TemplateDir:    opt.TemplateDir,
+		TemplateName:   opt.Template,
+		TemplateFS:     opt.TemplateFS,
 		TemplateParams: opt.TemplateParams,
 		TemplateData:   opt.TemplateData,
 	}
