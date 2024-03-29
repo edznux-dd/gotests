@@ -26,7 +26,7 @@ func New() *Render {
 	}
 
 	var err error
-	r.tmpls, err = r.tmpls.ParseFS(DefaultTemplates, "*/*.tmpl")
+	r.tmpls, err = r.tmpls.ParseFS(DefaultTemplates, "**/*.tmpl")
 	if err != nil {
 		// if there's an error here, we have a problem in the default template
 		// This should basically be a compile time error, so panic'ing to error asap.
@@ -39,7 +39,7 @@ func New() *Render {
 // LoadCustomTemplates allows to load in custom templates from a specified path.
 func (r *Render) LoadCustomTemplates(fs fs.FS) error {
 	var err error
-	r.tmpls, err = r.tmpls.ParseFS(fs, "*/*.tmpl")
+	r.tmpls, err = r.tmpls.ParseFS(fs, "**/*.tmpl")
 	if err != nil {
 		return fmt.Errorf("LoadCustomTemplates: %w", err)
 	}

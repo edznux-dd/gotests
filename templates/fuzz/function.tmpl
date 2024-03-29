@@ -1,10 +1,32 @@
 {{define "function"}}
 {{- $f := .}}
 
+// Run with `go test -fuzz=^{{.FuzzName}}$ -run=^{{.FuzzName}}$`
 func {{.FuzzName}}(f *testing.F) {
+    {{- with .Receiver}}
+        // Use a constructor instead of this if you have one.
+        {{- if .IsStruct}}
+            {{Receiver .}} := {{if .Type.IsStar}}&{{end}}{{.Type.Value}}{}
+        {{- end}}
+    {{- end}}
+    // Add "known edge case" values here. It might be a specific payload format in a string,
+    // or some other hardcoded values.
     f.Add({{- range .TestParameters}} {{- DefaultValueFromType . }},{{- end}})
     f.Fuzz(func(t *testing.T, {{- range .TestParameters}} {{- Param .}} {{.Type}}, {{- end}}){
-        {{template "inline" $f}}
+        {{- if and (not .OnlyReturnsError) (not .OnlyReturnsOneValue) }}
+            {{template "results" $f}} {{template "call" $f}}
+            if err != nil {
+                // Ignore handled errors
+                return
+            }
+        {{- end }}
+        {{- if .OnlyReturnsError }}
+            err := {{template "call" $f}}
+            if err != nil {
+                // Ignore handled errors
+                return
+            }
+        {{- end}}
         return
 	})
 }

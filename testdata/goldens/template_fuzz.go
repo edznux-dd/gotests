@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFoo201a(t *testing.T) {
+func FuzzFoo201a(f *testing.F) {
 	tests := []struct {
 		name string
 		want bool
@@ -19,7 +19,7 @@ func TestFoo201a(t *testing.T) {
 	}
 }
 
-func TestFoo201b(t *testing.T) {
+func FuzzFoo201b(f *testing.F) {
 	tests := []struct {
 		name      string
 		assertion assert.ErrorAssertionFunc
@@ -31,7 +31,7 @@ func TestFoo201b(t *testing.T) {
 	}
 }
 
-func TestFoo201c(t *testing.T) {
+func FuzzFoo201c(f *testing.F) {
 	type args struct {
 		n int
 	}
@@ -47,7 +47,7 @@ func TestFoo201c(t *testing.T) {
 	}
 }
 
-func TestFoo201d(t *testing.T) {
+func FuzzFoo201d(f *testing.F) {
 	tests := []struct {
 		name      string
 		want      bool
@@ -62,7 +62,7 @@ func TestFoo201d(t *testing.T) {
 	}
 }
 
-func TestFoo201e(t *testing.T) {
+func FuzzFoo201e(f *testing.F) {
 	type args struct {
 		n int
 		s string
